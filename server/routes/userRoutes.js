@@ -7,15 +7,14 @@ const router = express.Router();
 // Submit advance salary request
 router.post('/request', async (req, res) => {
   try {
-    const { userName, designation, department, location, amountRequested, date } = req.body;
+    const { userName, department, location, amountRequested, date } = req.body;
     
-    if (!userName || !designation || !department || !location || !amountRequested || !date) {
+    if (!userName || !department || !location || !amountRequested || !date) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
     
     const salaryRequest = new SalaryRequest({
       userName,
-      designation,
       department,
       location,
       amountRequested,

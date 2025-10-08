@@ -59,7 +59,6 @@ const UserDashboard = () => {
                   </div>
                   <div>
                     <h2 className="text-3xl font-bold text-gray-800">{user?.name}</h2>
-                    <p className="text-gray-600">{user?.designation}</p>
                     <div className="flex gap-4 mt-1">
                       <p className="text-sm text-gray-500">Department: <span className="font-medium text-gray-700">{user?.department}</span></p>
                       <p className="text-sm text-gray-500">Location: <span className="font-medium text-gray-700">{user?.location}</span></p>

@@ -7,11 +7,6 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  designation: {
-    type: String,
-    required: true,
-    trim: true
-  },
   department: {
     type: String,
     required: true,

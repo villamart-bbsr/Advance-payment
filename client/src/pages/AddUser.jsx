@@ -8,7 +8,6 @@ import Navbar from '../components/Navbar';
 const AddUser = () => {
   const [formData, setFormData] = useState({
     name: '',
-    designation: '',
     department: '',
     location: ''
   });
@@ -24,7 +23,7 @@ const AddUser = () => {
       
       if (response.data.success) {
         toast.success('User added successfully!');
-        setFormData({ name: '', designation: '', department: '', location: '' });
+        setFormData({ name: '', department: '', location: '' });
         setTimeout(() => navigate('/admin-dashboard'), 1500);
       }
     } catch (error) {
@@ -75,21 +74,6 @@ const AddUser = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 transition-colors"
                   placeholder="Enter user name"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Designation
-                </label>
-                <input
-                  type="text"
-                  name="designation"
-                  value={formData.designation}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 transition-colors"
-                  placeholder="Enter designation"
                   required
                 />
               </div>

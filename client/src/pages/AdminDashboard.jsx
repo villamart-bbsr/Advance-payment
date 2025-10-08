@@ -191,7 +191,6 @@ const AdminDashboard = () => {
                   <thead className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
                     <tr>
                       <th className="px-6 py-4 text-left">User Name</th>
-                      <th className="px-6 py-4 text-left">Designation</th>
                       <th className="px-6 py-4 text-left">Department</th>
                       <th className="px-6 py-4 text-left">Location</th>
                       <th className="px-6 py-4 text-left">Amount Requested</th>
@@ -206,9 +205,6 @@ const AdminDashboard = () => {
                       <tr key={record._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 font-medium text-gray-800">
                           {record.userName}
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {record.designation}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
                           {record.department}

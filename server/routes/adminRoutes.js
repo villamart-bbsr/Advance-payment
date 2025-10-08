@@ -19,10 +19,10 @@ router.post('/login', (req, res) => {
 // Add new user
 router.post('/add-user', async (req, res) => {
   try {
-    const { name, designation, department, location } = req.body;
+    const { name, department, location } = req.body;
     
-    if (!name || !designation || !department || !location) {
-      return res.status(400).json({ success: false, message: 'Name, designation, department, and location are required' });
+    if (!name || !department || !location) {
+      return res.status(400).json({ success: false, message: 'Name, department, and location are required' });
     }
     
     const existingUser = await User.findOne({ name });
@@ -30,7 +30,7 @@ router.post('/add-user', async (req, res) => {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
     
-    const user = new User({ name, designation, department, location });
+    const user = new User({ name, department, location });
     await user.save();
     
     res.status(201).json({ success: true, message: 'User added successfully', user });
@@ -123,7 +123,6 @@ router.post('/export-excel', async (req, res) => {
     // Prepare data for Excel
     const excelData = records.map(record => ({
       'User Name': record.userName,
-      'Designation': record.designation,
       'Department': record.department,
       'Location': record.location,
       'Amount Requested': record.amountRequested,
@@ -136,7 +135,6 @@ router.post('/export-excel', async (req, res) => {
     const totalAmount = records.reduce((sum, record) => sum + record.amountRequested, 0);
     excelData.push({
       'User Name': '',
-      'Designation': '',
       'Department': '',
       'Location': '',
       'Amount Requested': totalAmount,

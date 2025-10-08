@@ -7,7 +7,6 @@ import API from '../api/axios';
 const UserPortal = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState('');
-  const [designation, setDesignation] = useState('');
   const [department, setDepartment] = useState('');
   const [location, setLocation] = useState('');
   const [formData, setFormData] = useState({
@@ -39,7 +38,6 @@ const UserPortal = () => {
       try {
         const response = await API.get(`/user/details/${userName}`);
         if (response.data.success) {
-          setDesignation(response.data.user.designation);
           setDepartment(response.data.user.department);
           setLocation(response.data.user.location);
         }
@@ -47,7 +45,6 @@ const UserPortal = () => {
         toast.error('Failed to fetch user details');
       }
     } else {
-      setDesignation('');
       setDepartment('');
       setLocation('');
     }
@@ -66,7 +63,6 @@ const UserPortal = () => {
     try {
       const response = await API.post('/user/request', {
         userName: selectedUser,
-        designation: designation,
         department: department,
         location: location,
         amountRequested: parseFloat(formData.amount),
@@ -127,19 +123,6 @@ const UserPortal = () => {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Designation
-            </label>
-            <input
-              type="text"
-              value={designation}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50"
-              placeholder="Auto-filled from database"
-              disabled
-            />
           </div>
 
           <div>
