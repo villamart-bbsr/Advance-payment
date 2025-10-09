@@ -109,6 +109,7 @@ const UserDashboard = () => {
                       <tr>
                         <th className="px-6 py-4 text-left text-gray-700 font-semibold">Date</th>
                         <th className="px-6 py-4 text-left text-gray-700 font-semibold">Amount Requested</th>
+                        <th className="px-6 py-4 text-left text-gray-700 font-semibold">Reason</th>
                         <th className="px-6 py-4 text-left text-gray-700 font-semibold">Amount Paid</th>
                         <th className="px-6 py-4 text-left text-gray-700 font-semibold">Status</th>
                       </tr>
@@ -121,6 +122,11 @@ const UserDashboard = () => {
                           </td>
                           <td className="px-6 py-4 text-gray-800 font-semibold">
                             ₹{request.amountRequested.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-gray-600 max-w-xs">
+                            <div className="truncate" title={request.reason}>
+                              {request.reason || 'N/A'}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-gray-800 font-semibold">
                             ₹{request.amountPaid.toLocaleString()}

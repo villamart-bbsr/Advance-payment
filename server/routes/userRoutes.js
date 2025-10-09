@@ -1,15 +1,16 @@
 import express from 'express';
 import User from '../models/User.js';
 import SalaryRequest from '../models/SalaryRequest.js';
+import { sendAdvanceRequestEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
 // Submit advance salary request
 router.post('/request', async (req, res) => {
   try {
-    const { userName, department, location, amountRequested, date } = req.body;
+    const { userName, department, location, amountRequested, reason, date } = req.body;
     
-    if (!userName || !department || !location || !amountRequested || !date) {
+    if (!userName || !department || !location || !amountRequested || !reason || !date) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
     
@@ -18,10 +19,24 @@ router.post('/request', async (req, res) => {
       department,
       location,
       amountRequested,
+      reason,
       date
     });
     
     await salaryRequest.save();
+    
+    // Send email notification
+    const emailResult = await sendAdvanceRequestEmail({
+      userName,
+      amountRequested,
+      reason,
+      date
+    });
+    
+    if (!emailResult.success) {
+      console.error('Failed to send email:', emailResult.error);
+      // Continue anyway - don't fail the request if email fails
+    }
     
     res.status(201).json({ success: true, message: 'Request submitted successfully', salaryRequest });
   } catch (error) {

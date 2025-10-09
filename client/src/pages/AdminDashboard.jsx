@@ -10,12 +10,14 @@ const AdminDashboard = () => {
   const [records, setRecords] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    fromDate: '',
-    toDate: ''
-  });
+  const [selectedDate, setSelectedDate] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentData, setPaymentData] = useState({
+    amount: '',
+    date: '',
+    mode: '',
+    adjustMonth: ''
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,13 +29,15 @@ const AdminDashboard = () => {
     }
   }, [navigate]);
 
-  const fetchRecords = async (dateFilters = null) => {
+  const fetchRecords = async (date = null) => {
     setLoading(true);
     try {
-      const params = dateFilters || filters;
-      const queryString = new URLSearchParams(
-        Object.entries(params).filter(([_, v]) => v)
-      ).toString();
+      const dateToUse = date !== null ? date : selectedDate;
+      let queryString = '';
+      
+      if (dateToUse) {
+        queryString = `fromDate=${dateToUse}&toDate=${dateToUse}`;
+      }
       
       const response = await API.get(`/admin/salary-records?${queryString}`);
       
@@ -50,24 +54,35 @@ const AdminDashboard = () => {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    fetchRecords(filters);
+    fetchRecords(selectedDate);
   };
 
   const handleUpdatePayment = async (id) => {
-    if (!paymentAmount || paymentAmount <= 0) {
+    if (!paymentData.amount || paymentData.amount <= 0) {
       toast.error('Please enter a valid amount');
+      return;
+    }
+    if (!paymentData.date) {
+      toast.error('Please select payment date');
+      return;
+    }
+    if (!paymentData.mode) {
+      toast.error('Please select mode of payment');
       return;
     }
 
     try {
       const response = await API.put(`/admin/update-payment/${id}`, {
-        amountPaid: parseFloat(paymentAmount)
+        amountPaid: parseFloat(paymentData.amount),
+        amountPaidDate: paymentData.date,
+        modeOfPayment: paymentData.mode,
+        adjustMonth: paymentData.adjustMonth
       });
 
       if (response.data.success) {
         toast.success('Payment updated successfully!');
         setEditingId(null);
-        setPaymentAmount('');
+        setPaymentData({ amount: '', date: '', mode: '', adjustMonth: '' });
         fetchRecords();
       }
     } catch (error) {
@@ -77,14 +92,19 @@ const AdminDashboard = () => {
 
   const handleExportExcel = async () => {
     try {
-      const response = await API.post('/admin/export-excel', filters, {
+      const exportData = selectedDate ? {
+        fromDate: selectedDate,
+        toDate: selectedDate
+      } : {};
+      
+      const response = await API.post('/admin/export-excel', exportData, {
         responseType: 'blob'
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `salary_records_${new Date().toISOString().split('T')[0]}.xlsx`);
+      link.setAttribute('download', `salary_records_${selectedDate || 'all'}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -96,8 +116,8 @@ const AdminDashboard = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ fromDate: '', toDate: '' });
-    fetchRecords({ fromDate: '', toDate: '' });
+    setSelectedDate('');
+    fetchRecords('');
   };
 
   return (
@@ -131,30 +151,18 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="w-5 h-5 text-green-600" />
-            <h3 className="text-xl font-bold text-gray-800">Filter Records</h3>
+            <h3 className="text-xl font-bold text-gray-800">Filter by Date</h3>
           </div>
           
           <form onSubmit={handleFilterSubmit} className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-[200px]">
+            <div className="flex-1 min-w-[250px]">
               <label className="block text-gray-700 font-medium mb-2">
-                From Date
+                Select Date
               </label>
               <input
                 type="date"
-                value={filters.fromDate}
-                onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
-              />
-            </div>
-            
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-gray-700 font-medium mb-2">
-                To Date
-              </label>
-              <input
-                type="date"
-                value={filters.toDate}
-                onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
               />
             </div>
@@ -171,7 +179,7 @@ const AdminDashboard = () => {
               onClick={clearFilters}
               className="bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
             >
-              Clear
+              Show All
             </button>
           </form>
         </div>
@@ -190,87 +198,129 @@ const AdminDashboard = () => {
                 <table className="w-full">
                   <thead className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
                     <tr>
-                      <th className="px-6 py-4 text-left">User Name</th>
-                      <th className="px-6 py-4 text-left">Department</th>
-                      <th className="px-6 py-4 text-left">Location</th>
-                      <th className="px-6 py-4 text-left">Amount Requested</th>
-                      <th className="px-6 py-4 text-left">Date</th>
-                      <th className="px-6 py-4 text-left">Amount Paid</th>
-                      <th className="px-6 py-4 text-left">Status</th>
-                      <th className="px-6 py-4 text-left">Actions</th>
+                      <th className="px-4 py-3 text-left text-sm">Serial Number</th>
+                      <th className="px-4 py-3 text-left text-sm">User Name</th>
+                      <th className="px-4 py-3 text-left text-sm">Department</th>
+                      <th className="px-4 py-3 text-left text-sm">Location</th>
+                      <th className="px-4 py-3 text-left text-sm">Amount Requested</th>
+                      <th className="px-4 py-3 text-left text-sm">Date</th>
+                      <th className="px-4 py-3 text-left text-sm">Amount Paid Date</th>
+                      <th className="px-4 py-3 text-left text-sm">Amount Paid</th>
+                      <th className="px-4 py-3 text-left text-sm">Mode of Payment</th>
+                      <th className="px-4 py-3 text-left text-sm">Adjust Month</th>
+                      <th className="px-4 py-3 text-left text-sm">Status</th>
+                      <th className="px-4 py-3 text-left text-sm">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {records.map((record) => (
-                      <tr key={record._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 font-medium text-gray-800">
-                          {record.userName}
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {record.department}
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {record.location}
-                        </td>
-                        <td className="px-6 py-4 text-gray-800 font-semibold">
-                          ₹{record.amountRequested.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {new Date(record.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4">
+                    {records.map((record, index) => (
+                      <tr key={record._id} className="hover:bg-gray-50 text-sm">
+                        <td className="px-4 py-3 text-gray-800">{index + 1}</td>
+                        <td className="px-4 py-3 font-medium text-gray-800">{record.userName}</td>
+                        <td className="px-4 py-3 text-gray-600">{record.department}</td>
+                        <td className="px-4 py-3 text-gray-600">{record.location}</td>
+                        <td className="px-4 py-3 text-gray-800 font-semibold">₹{record.amountRequested.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-gray-600">{new Date(record.date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
                           {editingId === record._id ? (
                             <input
-                              type="number"
-                              value={paymentAmount}
-                              onChange={(e) => setPaymentAmount(e.target.value)}
-                              className="w-32 px-3 py-1 border-2 border-green-500 rounded"
-                              placeholder="Amount"
-                              autoFocus
+                              type="date"
+                              value={paymentData.date}
+                              onChange={(e) => setPaymentData({...paymentData, date: e.target.value})}
+                              className="w-32 px-2 py-1 border rounded text-xs"
                             />
                           ) : (
-                            <span className="text-gray-800 font-semibold">
-                              ₹{record.amountPaid.toLocaleString()}
+                            <span className="text-gray-600">
+                              {record.amountPaidDate ? new Date(record.amountPaidDate).toLocaleDateString() : '-'}
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            record.isPaid 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
+                        <td className="px-4 py-3">
+                          {editingId === record._id ? (
+                            <input
+                              type="number"
+                              value={paymentData.amount}
+                              onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})}
+                              className="w-24 px-2 py-1 border rounded text-xs"
+                              placeholder="Amount"
+                            />
+                          ) : (
+                            <span className="text-gray-800 font-semibold">₹{record.amountPaid.toLocaleString()}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {editingId === record._id ? (
+                            <select
+                              value={paymentData.mode}
+                              onChange={(e) => setPaymentData({...paymentData, mode: e.target.value})}
+                              className="w-32 px-2 py-1 border rounded text-xs"
+                            >
+                              <option value="">Select</option>
+                              <option value="Bank Transfer">Bank Transfer</option>
+                              <option value="Cash">Cash</option>
+                              <option value="Online">Online</option>
+                            </select>
+                          ) : (
+                            <span className="text-gray-600">{record.modeOfPayment || '-'}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {editingId === record._id ? (
+                            <input
+                              type="text"
+                              value={paymentData.adjustMonth}
+                              onChange={(e) => setPaymentData({...paymentData, adjustMonth: e.target.value})}
+                              className="w-24 px-2 py-1 border rounded text-xs"
+                              placeholder="Month"
+                            />
+                          ) : (
+                            <span className="text-gray-600">{record.adjustMonth || '-'}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            record.isPaid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                           }`}>
                             {record.isPaid ? 'Paid' : 'Pending'}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3">
                           {editingId === record._id ? (
-                            <div className="flex gap-2">
+                            <div className="flex gap-1">
                               <button
                                 onClick={() => handleUpdatePayment(record._id)}
-                                className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                                className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
                               >
                                 Save
                               </button>
                               <button
                                 onClick={() => {
                                   setEditingId(null);
-                                  setPaymentAmount('');
+                                  setPaymentData({ amount: '', date: '', mode: '', adjustMonth: '' });
                                 }}
-                                className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+                                className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
                               >
                                 Cancel
                               </button>
                             </div>
+                          ) : record.isPaid ? (
+                            <span className="text-gray-400 text-xs italic">
+                              Already Paid
+                            </span>
                           ) : (
                             <button
                               onClick={() => {
                                 setEditingId(record._id);
-                                setPaymentAmount(record.amountPaid.toString());
+                                setPaymentData({
+                                  amount: record.amountPaid.toString(),
+                                  date: record.amountPaidDate ? new Date(record.amountPaidDate).toISOString().split('T')[0] : '',
+                                  mode: record.modeOfPayment || '',
+                                  adjustMonth: record.adjustMonth || ''
+                                });
                               }}
-                              className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                              className="text-green-600 hover:text-green-800 flex items-center gap-1 text-xs"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Edit2 className="w-3 h-3" />
                               Update
                             </button>
                           )}
@@ -282,13 +332,23 @@ const AdminDashboard = () => {
               </div>
               
               <div className="bg-gradient-to-r from-green-100 to-emerald-100 px-6 py-4 border-t-4 border-green-600">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-gray-800">
-                    Total Amount Requested:
-                  </span>
-                  <span className="text-2xl font-bold text-green-600">
-                    ₹{totalAmount.toLocaleString()}
-                  </span>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-gray-800">
+                      Total Amount Requested:
+                    </span>
+                    <span className="text-2xl font-bold text-green-600">
+                      ₹{totalAmount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-gray-800">
+                      Total Amount Paid:
+                    </span>
+                    <span className="text-2xl font-bold text-emerald-600">
+                      ₹{records.reduce((sum, r) => sum + (r.amountPaid || 0), 0).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
               </div>
             </>

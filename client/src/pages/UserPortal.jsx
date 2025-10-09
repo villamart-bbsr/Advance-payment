@@ -11,6 +11,7 @@ const UserPortal = () => {
   const [location, setLocation] = useState('');
   const [formData, setFormData] = useState({
     amount: '',
+    reason: '',
     date: ''
   });
   const [loading, setLoading] = useState(false);
@@ -66,6 +67,7 @@ const UserPortal = () => {
         department: department,
         location: location,
         amountRequested: parseFloat(formData.amount),
+        reason: formData.reason,
         date: formData.date
       });
 
@@ -163,6 +165,20 @@ const UserPortal = () => {
               placeholder="Enter amount"
               required
               min="1"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Reason for Advance
+            </label>
+            <textarea
+              value={formData.reason}
+              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 transition-colors resize-none"
+              placeholder="E.g., personal emergency, medical expense, or urgent financial need"
+              rows="3"
+              required
             />
           </div>
 
